@@ -17,7 +17,7 @@ import type {
   RiskLevel, ProjectStatus,
 } from '../types';
 
-const API_BASE = 'http://localhost:8000';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 const api = axios.create({ baseURL: API_BASE, headers: { 'Content-Type': 'application/json' } });
 
 const up = (user: string, role: string) => `user=${encodeURIComponent(user)}&role=${encodeURIComponent(role)}`;
