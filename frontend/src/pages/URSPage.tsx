@@ -304,171 +304,176 @@ const URSPage: React.FC = () => {
         {/* Detail Panel */}
         {selectedURS && (
           <Col span={10}>
-            <Card
-              title={
-                <Space>
-                  <FileTextOutlined />
-                  {selectedURS.id}
-                </Space>
-              }
-              extra={
-                <Space>
-                  {selectedURS.status !== 'Approved' && user?.role === 'QA' && (
-                    <Button size="small" type="primary" onClick={() => handleApprove(selectedURS)} icon={<CheckCircleOutlined />}>
-                      Approve
-                    </Button>
-                  )}
-                </Space>
-              }
-              style={{ position: 'sticky', top: 16 }}
-            >
-              <Descriptions column={2} size="small" style={{ marginBottom: 16 }}>
-                <Descriptions.Item label="Title" span={2}>{selectedURS.title}</Descriptions.Item>
-                <Descriptions.Item label="Category">{selectedURS.category}</Descriptions.Item>
-                <Descriptions.Item label="Status">
-                  <Tag color={statusColors[selectedURS.status]}>{selectedURS.status}</Tag>
-                </Descriptions.Item>
-                <Descriptions.Item label="GxP Impact">
-                  <Tag color={selectedURS.gxp_impact ? 'red' : 'default'}>{selectedURS.gxp_impact ? 'Yes' : 'No'}</Tag>
-                </Descriptions.Item>
-                <Descriptions.Item label="Overall Risk">
-                  <Tag color={riskColors[selectedURS.overall_risk]}>{selectedURS.overall_risk}</Tag>
-                </Descriptions.Item>
-              </Descriptions>
-
-              <div style={{ marginBottom: 16 }}>
-                <div style={{ fontWeight: 600, marginBottom: 4 }}>Description</div>
-                <div style={{ fontSize: 13, color: '#334155' }}>{selectedURS.description}</div>
-              </div>
-
-              {selectedURS.acceptance_criteria && (
-                <div style={{ marginBottom: 16 }}>
-                  <div style={{ fontWeight: 600, marginBottom: 4 }}>Acceptance Criteria</div>
-                  <div style={{ fontSize: 13, color: '#334155' }}>{selectedURS.acceptance_criteria}</div>
-                </div>
-              )}
-
-              {/* Risk Breakdown */}
-              <Card size="small" title="Risk Assessment" style={{ marginBottom: 16 }}>
-                <Row gutter={8}>
-                  <Col span={8}>
-                    <div style={{ fontSize: 11, color: '#64748b' }}>Patient Safety</div>
-                    <Tag color={riskColors[selectedURS.patient_safety_risk]}>{selectedURS.patient_safety_risk}</Tag>
-                  </Col>
-                  <Col span={8}>
-                    <div style={{ fontSize: 11, color: '#64748b' }}>Product Quality</div>
-                    <Tag color={riskColors[selectedURS.product_quality_risk]}>{selectedURS.product_quality_risk}</Tag>
-                  </Col>
-                  <Col span={8}>
-                    <div style={{ fontSize: 11, color: '#64748b' }}>Data Integrity</div>
-                    <Tag color={riskColors[selectedURS.data_integrity_risk]}>{selectedURS.data_integrity_risk}</Tag>
-                  </Col>
-                </Row>
-              </Card>
-
-              {/* AI Actions */}
+            <div style={{ 
+              maxHeight: 'calc(100vh - 280px)', 
+              overflowY: 'auto',
+              paddingRight: 8,
+            }}>
               <Card
-                size="small"
-                title={<><RobotOutlined style={{ color: '#14b8a6' }} /> AI Assistance</>}
-                style={{ background: 'linear-gradient(135deg, rgba(20, 184, 166, 0.05) 0%, rgba(59, 130, 246, 0.05) 100%)' }}
-              >
-                <Space wrap>
-                  <Button icon={<ThunderboltOutlined />} onClick={() => handleAIRisk(selectedURS)} size="small">
-                    Suggest Risk
-                  </Button>
-                  <Button icon={<BulbOutlined />} onClick={() => handleAmbiguity(selectedURS)} size="small">
-                    Check Ambiguity
-                  </Button>
-                  {selectedURS.status === 'Approved' && (
-                    <Button icon={<FileTextOutlined />} onClick={() => handleAISuggestFS(selectedURS)} size="small" type="primary" ghost>
-                      Generate FS
-                    </Button>
-                  )}
-                </Space>
-
-                {/* AI Risk Result */}
-                {aiRisk && (
-                  <Alert
-                    type="info"
-                    style={{ marginTop: 12 }}
-                    message={
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span>AI Risk Suggestion ({(aiRisk.confidence * 100).toFixed(0)}% confidence)</span>
-                        <Button size="small" type="primary" onClick={applyAIRisk}>Apply</Button>
-                      </div>
-                    }
-                    description={
-                      <div>
-                        <div style={{ marginTop: 8 }}>
-                          Overall: <Tag color={riskColors[aiRisk.overall_risk]}>{aiRisk.overall_risk}</Tag>
-                        </div>
-                        <div style={{ marginTop: 8, fontSize: 12 }}>{aiRisk.reason}</div>
-                      </div>
-                    }
-                  />
-                )}
-
-                {/* AI Ambiguity Result */}
-                {aiAmbiguity && (
-                  <Alert
-                    type={aiAmbiguity.ambiguity_score > 0.5 ? 'warning' : 'success'}
-                    style={{ marginTop: 12 }}
-                    message={`Ambiguity Score: ${(aiAmbiguity.ambiguity_score * 100).toFixed(0)}%`}
-                    description={
-                      aiAmbiguity.issues.length > 0 ? (
-                        <ul style={{ margin: '8px 0 0', paddingLeft: 20 }}>
-                          {aiAmbiguity.issues.slice(0, 3).map((issue, i) => (
-                            <li key={i} style={{ fontSize: 12 }}>
-                              <strong>{issue.type}:</strong> "{issue.term}" - {issue.suggestion}
-                            </li>
-                          ))}
-                        </ul>
-                      ) : 'No significant ambiguity detected.'
-                    }
-                  />
-                )}
-              </Card>
-            </Card>
-
-              {/* Linked FS Section */}
-              {selectedURS && getLinkedFS(selectedURS.id).length > 0 && (
-                <Card 
-                  size="small" 
-                  title={<><AuditOutlined /> Linked Specifications ({getLinkedFS(selectedURS.id).length})</>}
-                  style={{ marginTop: 16 }}
-                >
-                  <List
-                    size="small"
-                    dataSource={getLinkedFS(selectedURS.id)}
-                    renderItem={(fs) => (
-                      <List.Item
-                        actions={[
-                          <Button 
-                            type="link" 
-                            size="small" 
-                            icon={<EyeOutlined />}
-                            onClick={() => { setSelectedFS(fs); setFsDrawerVisible(true); }}
-                          >
-                            View
-                          </Button>
-                        ]}
-                      >
-                        <List.Item.Meta
-                          title={
-                            <Space>
-                              <Tag color="purple">{fs.id}</Tag>
-                              <span>{fs.title}</span>
-                            </Space>
-                          }
-                          description={
-                            <Tag color={fsStatusColors[fs.status]}>{fs.status}</Tag>
-                          }
-                        />
-                      </List.Item>
+                title={
+                  <Space>
+                    <FileTextOutlined />
+                    {selectedURS.id}
+                  </Space>
+                }
+                extra={
+                  <Space>
+                    {selectedURS.status !== 'Approved' && user?.role === 'QA' && (
+                      <Button size="small" type="primary" onClick={() => handleApprove(selectedURS)} icon={<CheckCircleOutlined />}>
+                        Approve
+                      </Button>
                     )}
-                  />
+                  </Space>
+                }
+              >
+                <Descriptions column={2} size="small" style={{ marginBottom: 16 }}>
+                  <Descriptions.Item label="Title" span={2}>{selectedURS.title}</Descriptions.Item>
+                  <Descriptions.Item label="Category">{selectedURS.category}</Descriptions.Item>
+                  <Descriptions.Item label="Status">
+                    <Tag color={statusColors[selectedURS.status]}>{selectedURS.status}</Tag>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="GxP Impact">
+                    <Tag color={selectedURS.gxp_impact ? 'red' : 'default'}>{selectedURS.gxp_impact ? 'Yes' : 'No'}</Tag>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Overall Risk">
+                    <Tag color={riskColors[selectedURS.overall_risk]}>{selectedURS.overall_risk}</Tag>
+                  </Descriptions.Item>
+                </Descriptions>
+
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontWeight: 600, marginBottom: 4 }}>Description</div>
+                  <div style={{ fontSize: 13, color: '#334155' }}>{selectedURS.description}</div>
+                </div>
+
+                {selectedURS.acceptance_criteria && (
+                  <div style={{ marginBottom: 16 }}>
+                    <div style={{ fontWeight: 600, marginBottom: 4 }}>Acceptance Criteria</div>
+                    <div style={{ fontSize: 13, color: '#334155' }}>{selectedURS.acceptance_criteria}</div>
+                  </div>
+                )}
+
+                {/* Risk Breakdown */}
+                <Card size="small" title="Risk Assessment" style={{ marginBottom: 16 }}>
+                  <Row gutter={8}>
+                    <Col span={8}>
+                      <div style={{ fontSize: 11, color: '#64748b' }}>Patient Safety</div>
+                      <Tag color={riskColors[selectedURS.patient_safety_risk]}>{selectedURS.patient_safety_risk}</Tag>
+                    </Col>
+                    <Col span={8}>
+                      <div style={{ fontSize: 11, color: '#64748b' }}>Product Quality</div>
+                      <Tag color={riskColors[selectedURS.product_quality_risk]}>{selectedURS.product_quality_risk}</Tag>
+                    </Col>
+                    <Col span={8}>
+                      <div style={{ fontSize: 11, color: '#64748b' }}>Data Integrity</div>
+                      <Tag color={riskColors[selectedURS.data_integrity_risk]}>{selectedURS.data_integrity_risk}</Tag>
+                    </Col>
+                  </Row>
                 </Card>
-              )}
+
+                {/* Linked FS Section - Moved inside the main card */}
+                {getLinkedFS(selectedURS.id).length > 0 && (
+                  <Card 
+                    size="small" 
+                    title={<><AuditOutlined style={{ color: '#8b5cf6' }} /> Linked Specifications ({getLinkedFS(selectedURS.id).length})</>}
+                    style={{ marginBottom: 16 }}
+                  >
+                    <List
+                      size="small"
+                      dataSource={getLinkedFS(selectedURS.id)}
+                      renderItem={(fs) => (
+                        <List.Item
+                          actions={[
+                            <Button 
+                              type="link" 
+                              size="small" 
+                              icon={<EyeOutlined />}
+                              onClick={() => { setSelectedFS(fs); setFsDrawerVisible(true); }}
+                            >
+                              View
+                            </Button>
+                          ]}
+                        >
+                          <List.Item.Meta
+                            title={
+                              <Space>
+                                <Tag color="purple">{fs.id}</Tag>
+                                <span style={{ fontSize: 13 }}>{fs.title}</span>
+                              </Space>
+                            }
+                            description={
+                              <Tag color={fsStatusColors[fs.status]}>{fs.status}</Tag>
+                            }
+                          />
+                        </List.Item>
+                      )}
+                    />
+                  </Card>
+                )}
+
+                {/* AI Actions */}
+                <Card
+                  size="small"
+                  title={<><RobotOutlined style={{ color: '#14b8a6' }} /> AI Assistance</>}
+                  style={{ background: 'linear-gradient(135deg, rgba(20, 184, 166, 0.05) 0%, rgba(59, 130, 246, 0.05) 100%)' }}
+                >
+                  <Space wrap>
+                    <Button icon={<ThunderboltOutlined />} onClick={() => handleAIRisk(selectedURS)} size="small">
+                      Suggest Risk
+                    </Button>
+                    <Button icon={<BulbOutlined />} onClick={() => handleAmbiguity(selectedURS)} size="small">
+                      Check Ambiguity
+                    </Button>
+                    {selectedURS.status === 'Approved' && (
+                      <Button icon={<FileTextOutlined />} onClick={() => handleAISuggestFS(selectedURS)} size="small" type="primary" ghost>
+                        Generate FS
+                      </Button>
+                    )}
+                  </Space>
+
+                  {/* AI Risk Result */}
+                  {aiRisk && (
+                    <Alert
+                      type="info"
+                      style={{ marginTop: 12 }}
+                      message={
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span>AI Risk Suggestion ({(aiRisk.confidence * 100).toFixed(0)}% confidence)</span>
+                          <Button size="small" type="primary" onClick={applyAIRisk}>Apply</Button>
+                        </div>
+                      }
+                      description={
+                        <div>
+                          <div style={{ marginTop: 8 }}>
+                            Overall: <Tag color={riskColors[aiRisk.overall_risk]}>{aiRisk.overall_risk}</Tag>
+                          </div>
+                          <div style={{ marginTop: 8, fontSize: 12 }}>{aiRisk.reason}</div>
+                        </div>
+                      }
+                    />
+                  )}
+
+                  {/* AI Ambiguity Result */}
+                  {aiAmbiguity && (
+                    <Alert
+                      type={aiAmbiguity.ambiguity_score > 0.5 ? 'warning' : 'success'}
+                      style={{ marginTop: 12 }}
+                      message={`Ambiguity Score: ${(aiAmbiguity.ambiguity_score * 100).toFixed(0)}%`}
+                      description={
+                        aiAmbiguity.issues.length > 0 ? (
+                          <ul style={{ margin: '8px 0 0', paddingLeft: 20 }}>
+                            {aiAmbiguity.issues.slice(0, 3).map((issue, i) => (
+                              <li key={i} style={{ fontSize: 12 }}>
+                                <strong>{issue.type}:</strong> "{issue.term}" - {issue.suggestion}
+                              </li>
+                            ))}
+                          </ul>
+                        ) : 'No significant ambiguity detected.'
+                      }
+                    />
+                  )}
+                </Card>
+              </Card>
+            </div>
           </Col>
         )}
               </Row>
